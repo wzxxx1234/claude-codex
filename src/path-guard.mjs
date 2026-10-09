@@ -13,6 +13,15 @@ function isSameOrDescendant(candidate, root) {
   return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
+function isProtectedPath(candidate, protectedRoot) {
+  const normalizedRoot = comparisonPath(protectedRoot);
+  const normalizedCandidate = comparisonPath(candidate);
+  if (path.parse(normalizedRoot).root === normalizedRoot) {
+    return normalizedCandidate === normalizedRoot;
+  }
+  return isSameOrDescendant(normalizedCandidate, normalizedRoot);
+}
+
 function defaultProtectedRoots() {
   const homeDir = os.homedir();
   const localAppData =
@@ -71,7 +80,7 @@ export async function validateProjectPath(
   }
 
   for (const protectedRoot of protectedRoots) {
-    if (isSameOrDescendant(realPath, protectedRoot)) {
+    if (isProtectedPath(realPath, protectedRoot)) {
       throw new Error("Project path is protected");
     }
   }
