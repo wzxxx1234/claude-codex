@@ -1,0 +1,17 @@
+{
+  "name": "claude-codex-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "node src/server.mjs",
+    "install-claude": "node bin/install-claude.mjs",
+    "restore-claude": "node bin/restore-claude.mjs",
+    "smoke": "node bin/bridge-smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.6.5"
+  }
+}
