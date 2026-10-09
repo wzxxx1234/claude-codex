@@ -61,12 +61,22 @@ export function loadBridgeConfig(env = process.env) {
   const source = { ...process.env, ...env };
   const localAppData = source.LOCALAPPDATA ?? path.join(source.USERPROFILE ?? "", "AppData", "Local");
   const appData = source.APPDATA ?? path.join(source.USERPROFILE ?? "", "AppData", "Roaming");
+  const claude3pConfigPath = path.join(
+    localAppData,
+    "Claude-3p",
+    "claude_desktop_config.json"
+  );
+  const claudeConfigPath =
+    source.CLAUDE_DESKTOP_CONFIG_PATH ??
+    (fs.existsSync(claude3pConfigPath)
+      ? claude3pConfigPath
+      : path.join(appData, "Claude", "claude_desktop_config.json"));
 
   return {
     codexPath: resolveCodexPath(source),
     nodePath: source.CODEX_NODE_PATH ?? process.execPath,
     sessionRoot: path.join(localAppData, "ClaudeCodexBridge", "sessions"),
-    claudeConfigPath: path.join(appData, "Claude", "claude_desktop_config.json"),
+    claudeConfigPath,
     viewerHost: "127.0.0.1",
     viewerPort: 0,
     defaultSandbox: "workspace-write",

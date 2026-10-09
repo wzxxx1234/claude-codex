@@ -53,8 +53,10 @@ npm run install-claude
 - 只写入（或更新）`mcpServers.claude-codex-bridge`，指向当前 Node 和 `src/server.mjs` 的绝对路径。
 
 重复执行是安全的：内容一致时不会改动文件，也不会产生新备份。
-安装脚本默认只碰 `%APPDATA%\Claude\claude_desktop_config.json`；
-用 `npm run install-claude -- --config <路径>` 可以对其它配置文件试装。
+安装脚本会优先使用实际存在的 `%LOCALAPPDATA%\Claude-3p\claude_desktop_config.json`；
+没有这个文件时才使用 `%APPDATA%\Claude\claude_desktop_config.json`。
+用 `npm run install-claude -- --config <路径>` 可以对其它配置文件试装，
+或者设置 `CLAUDE_DESKTOP_CONFIG_PATH` 指定配置文件。
 
 ## 重启 Claude 桌面版
 
