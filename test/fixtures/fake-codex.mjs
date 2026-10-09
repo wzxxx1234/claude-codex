@@ -67,6 +67,15 @@ if (scenario === "success") {
     type: "item.completed",
     item: { type: "agent_message", text: "Recovered from malformed line" }
   });
+} else if (scenario === "secret-output") {
+  emit({
+    type: "item.completed",
+    item: {
+      type: "agent_message",
+      text: "api_key=sk-log-secret"
+    }
+  });
+  process.stderr.write("Authorization: Bearer stderr-secret\n");
 } else if (scenario === "hang") {
   setInterval(() => {}, 1_000);
 } else {

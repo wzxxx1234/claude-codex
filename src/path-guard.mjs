@@ -22,8 +22,7 @@ function isProtectedPath(candidate, protectedRoot) {
   return isSameOrDescendant(normalizedCandidate, normalizedRoot);
 }
 
-function defaultProtectedRoots() {
-  const homeDir = os.homedir();
+export function defaultProtectedRoots(homeDir = os.homedir()) {
   const localAppData =
     process.env.LOCALAPPDATA ?? path.join(homeDir, "AppData", "Local");
   const appData = process.env.APPDATA ?? path.join(homeDir, "AppData", "Roaming");
@@ -39,7 +38,8 @@ function defaultProtectedRoots() {
     programFilesX86,
     localAppData,
     appData,
-    path.join(localAppData, "OpenAI", "Codex")
+    path.join(localAppData, "OpenAI", "Codex"),
+    path.join(homeDir, ".codex")
   ];
 }
 

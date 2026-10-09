@@ -194,6 +194,35 @@ test("provider errors are classified as needs_user", async () => {
   });
 });
 
+test("raw Codex logs are redacted before writing", async () => {
+  await withTempRoot(async (root) => {
+    const { sessionRoot, session } = makeSession(root);
+    await fs.mkdir(session.repoPath, { recursive: true });
+
+    const execution = startCodexTask({
+      session,
+      task: { id: "T1", title: "Secrets", body: "Do not leak secrets." },
+      codexPath: fixturePath,
+      nodePath: process.execPath,
+      sessionRoot,
+      env: {
+        ...process.env,
+        FAKE_CODEX_SCENARIO: "secret-output"
+      }
+    });
+
+    await execution.completion;
+
+    const stdout = await fs.readFile(execution.stdoutPath, "utf8");
+    const stderr = await fs.readFile(execution.stderrPath, "utf8");
+
+    assert.doesNotMatch(stdout, /sk-log-secret|stderr-secret/);
+    assert.match(stdout, /\[REDACTED\]/);
+    assert.doesNotMatch(stderr, /sk-log-secret|stderr-secret/);
+    assert.match(stderr, /\[REDACTED\]/);
+  });
+});
+
 test("cancellation terminates the hanging process tree", async () => {
   await withTempRoot(async (root) => {
     const { sessionRoot, session } = makeSession(root);

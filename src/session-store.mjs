@@ -12,8 +12,18 @@ const ACTIVE_STATES = new Set([
   "interrupted"
 ]);
 
+const SESSION_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function validateSessionId(sessionId) {
+  if (typeof sessionId !== "string" || !SESSION_ID_PATTERN.test(sessionId)) {
+    throw new Error("Session id must be a valid UUID");
+  }
+  return sessionId;
+}
+
 function sessionDirectory(sessionRoot, sessionId) {
-  return path.join(sessionRoot, sessionId);
+  return path.join(sessionRoot, validateSessionId(sessionId));
 }
 
 function sessionFile(sessionRoot, sessionId) {
@@ -82,6 +92,7 @@ export async function saveSession(sessionRoot, session) {
   if (!session?.id) {
     throw new Error("Session id is required");
   }
+  validateSessionId(session.id);
 
   await writeFileAtomic(
     sessionFile(sessionRoot, session.id),
@@ -90,6 +101,7 @@ export async function saveSession(sessionRoot, session) {
 }
 
 export async function appendSessionEvent(sessionRoot, sessionId, event) {
+  validateSessionId(sessionId);
   const directory = sessionDirectory(sessionRoot, sessionId);
   await fs.mkdir(directory, { recursive: true });
   await fs.appendFile(

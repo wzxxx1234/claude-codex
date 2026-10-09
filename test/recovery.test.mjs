@@ -5,12 +5,15 @@ import os from "node:os";
 import path from "node:path";
 
 import { recoverSessions } from "../src/recovery.mjs";
+import * as reportWriter from "../src/report-writer.mjs";
 import { createBridgeRuntime } from "../src/server.mjs";
+import { createSessionManager } from "../src/session-manager.mjs";
 import {
   createSession,
   loadSession,
   saveSession
 } from "../src/session-store.mjs";
+import * as store from "../src/session-store.mjs";
 
 async function withTempRoot(run) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "bridge-recovery-"));
@@ -178,5 +181,48 @@ test("bridge runtime recovers running sessions during startup", async () => {
     } finally {
       await runtime.close();
     }
+  });
+});
+
+test("watch marks a restarted running session interrupted when its process is gone", async () => {
+  await withTempRoot(async (root) => {
+    const { sessionRoot, session } = await createStoredSession(root);
+    await saveSession(sessionRoot, {
+      ...session,
+      state: "running",
+      tasks: session.tasks.map((task, index) => ({
+        ...task,
+        status: index === 0 ? "running" : "pending"
+      })),
+      codex: { ...session.codex, pid: 999999 }
+    });
+
+    const manager = createSessionManager({
+      config: { sessionRoot },
+      store,
+      runner: {
+        isProcessAlive: async () => false
+      },
+      viewer: {
+        urlFor() {
+          return "http://127.0.0.1/view";
+        },
+        publish() {},
+        async open() {},
+        async close() {}
+      },
+      reportWriter
+    });
+
+    const result = await manager.watch({
+      sessionId: session.id,
+      waitMs: 0
+    });
+    const loaded = await loadSession(sessionRoot, session.id);
+
+    assert.equal(result.state, "interrupted");
+    assert.equal(result.nextAction, "ask_user_for_decision");
+    assert.equal(loaded.codex.pid, null);
+    assert.equal(loaded.tasks[0].status, "pending");
   });
 });

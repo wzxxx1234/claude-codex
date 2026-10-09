@@ -5,6 +5,7 @@ import path from "node:path";
 import { finished } from "node:stream/promises";
 
 import { normalizeCodexEvent } from "./event-normalizer.mjs";
+import { redactSecrets } from "./redact.mjs";
 
 const SCRIPT_EXTENSIONS = new Set([".cjs", ".js", ".mjs"]);
 
@@ -213,10 +214,14 @@ export function startCodexTask({
   const stderrFinished = finished(stderrStream);
 
   const stdoutLines = createLineBuffer((line) => {
+    stdoutStream.write(`${redactSecrets(line)}\n`);
     const normalized = normalizeCodexEvent(line);
     if (normalized) {
       Promise.resolve(onEvent?.(normalized)).catch(() => {});
     }
+  });
+  const stderrLines = createLineBuffer((line) => {
+    stderrStream.write(`${redactSecrets(line)}\n`);
   });
 
   const child = spawnImpl(command, args, {
@@ -228,11 +233,10 @@ export function startCodexTask({
   });
 
   child.stdout.on("data", (chunk) => {
-    stdoutStream.write(chunk);
     stdoutLines.push(chunk);
   });
   child.stderr.on("data", (chunk) => {
-    stderrStream.write(chunk);
+    stderrLines.push(chunk);
   });
 
   child.stdin.end(createTaskPrompt(task), "utf8");
@@ -246,6 +250,7 @@ export function startCodexTask({
 
     child.once("close", async (exitCode, signal) => {
       stdoutLines.flush();
+      stderrLines.flush();
       stdoutStream.end();
       stderrStream.end();
 

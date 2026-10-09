@@ -4,7 +4,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { validateProjectPath } from "../src/path-guard.mjs";
+import {
+  defaultProtectedRoots,
+  validateProjectPath
+} from "../src/path-guard.mjs";
 
 async function withTempRoot(run) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "bridge-path-guard-"));
@@ -28,6 +31,12 @@ test("accepts a normal project directory under the user home", async () => {
     assert.equal(result.realPath, project);
     assert.match(result.projectId, /^[a-f0-9]{16}$/);
   });
+});
+
+test("default protected roots include the Codex config directory", () => {
+  const homeDir = path.join("C:\\", "Users", "Example");
+
+  assert.ok(defaultProtectedRoots(homeDir).includes(path.join(homeDir, ".codex")));
 });
 
 test("rejects protected roots and the home directory itself", async () => {

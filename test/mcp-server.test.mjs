@@ -43,7 +43,12 @@ function createFakeRunner() {
         completion,
         resolve: resolveCompletion
       };
-      starts.push({ sessionId: session.id, taskId: task.id, pid });
+      starts.push({
+        sessionId: session.id,
+        taskId: task.id,
+        pid,
+        sandbox: session.sandbox
+      });
       runs.set(`${session.id}:${task.id}`, run);
 
       queueMicrotask(() => {
@@ -456,6 +461,49 @@ test("codex_cancel terminates the running task and preserves checkpoints", async
     assert.equal(harness.runner.terminated.length, 1);
     assert.equal(status.tasks.find((task) => task.id === "T1").status, "completed");
     assert.equal(status.tasks.find((task) => task.id === "T2").status, "pending");
+  } finally {
+    await harness.cleanup();
+  }
+});
+
+test("sandbox retry requires confirmation and uses danger-full-access only after confirmation", async () => {
+  const harness = await createHarness();
+  try {
+    const started = await startSession(harness.client, harness.repoPath);
+    await harness.runner.complete(started.sessionId, "T1", {
+      status: "needs_user",
+      errorKind: "sandbox_error"
+    });
+    const watched = structured(
+      await harness.client.callTool({
+        name: "codex_watch",
+        arguments: { sessionId: started.sessionId, waitMs: 1_000 }
+      })
+    );
+
+    assert.equal(watched.nextAction, "ask_user_for_decision");
+
+    const denied = await harness.client.callTool({
+      name: "codex_retry",
+      arguments: { sessionId: started.sessionId }
+    });
+    assert.equal(denied.isError, true);
+    assert.match(denied.content[0].text, /allowUnsandboxed/i);
+    assert.equal(harness.runner.starts.length, 1);
+
+    structured(
+      await harness.client.callTool({
+        name: "codex_retry",
+        arguments: {
+          sessionId: started.sessionId,
+          allowUnsandboxed: true
+        }
+      })
+    );
+
+    assert.equal(harness.runner.starts.length, 2);
+    assert.equal(harness.runner.starts[1].taskId, "T1");
+    assert.equal(harness.runner.starts[1].sandbox, "danger-full-access");
   } finally {
     await harness.cleanup();
   }

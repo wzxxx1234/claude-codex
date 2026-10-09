@@ -113,6 +113,7 @@ export function buildTaskCheckpoint({
     taskId: task.id,
     title: redactSecrets(task.title ?? ""),
     status: safeResult.status ?? "completed",
+    errorKind: safeResult.errorKind ?? null,
     summary: safeResult.summary ?? "",
     changedFiles: redactedClone(normalizeChangedFiles(changedFiles)),
     commands: safeResult.commands ?? [],

@@ -125,6 +125,27 @@ test("atomic writes replace a complete JSON file", async () => {
   });
 });
 
+test("session ids cannot escape the session root", async () => {
+  await withTempRoot(async (root) => {
+    const session = await createSession({
+      sessionRoot: root,
+      repoPath: path.join(root, "project"),
+      projectId: "0123456789abcdef",
+      planMarkdown: "## T1 First\nDo A",
+      tasks: [{ id: "T1", title: "First", body: "Do A", ordinal: 0 }]
+    });
+
+    await assert.rejects(
+      loadSession(root, "..\\outside"),
+      /session id/i
+    );
+    await assert.rejects(
+      saveSession(root, { ...session, id: "..\\outside" }),
+      /session id/i
+    );
+  });
+});
+
 async function createStoredSession(
   root,
   { projectId, state = "created" }

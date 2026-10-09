@@ -440,7 +440,27 @@ export function createSessionManager({
       }
     }
 
-    const session = await load(sessionId);
+    let session = await load(sessionId);
+    if (session.state === "running" && !runtime) {
+      const pid = session.codex?.pid;
+      const alive =
+        pid != null && (await Promise.resolve(runner.isProcessAlive(pid)));
+      if (!alive) {
+        session = transitionSession(session, "interrupted", {
+          codex: {
+            ...session.codex,
+            pid: null
+          },
+          tasks: session.tasks.map((entry, index) =>
+            index === session.currentTaskIndex && entry.status === "running"
+              ? { ...entry, status: "pending" }
+              : entry
+          )
+        });
+        await store.saveSession(config.sessionRoot, session);
+      }
+    }
+
     return resultForSession(session, {
       report: await readReportIfPresent(session),
       viewerUrl: viewer.urlFor(session.id, session.viewerToken)
