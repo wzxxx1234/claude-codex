@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test \"test/*.test.mjs\"",
     "start": "node src/server.mjs",
     "install-claude": "node bin/install-claude.mjs",
     "restore-claude": "node bin/restore-claude.mjs",
