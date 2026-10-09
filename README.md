@@ -154,3 +154,20 @@ npm run restore-claude
 
 真实安装和人工验收记录在 `ACCEPTANCE.md`，会由最终验收步骤补齐
 （安装到真实 Claude 配置、重启 Claude、跑一个无害临时项目、再跑 `C:\Users\王\Desktop\单词` 的副本）。
+
+## 自动上传 GitHub 技能
+
+仓库内附带 `skills/auto-push-github/`，用于项目完成后自动提交并推送到已有的 GitHub 仓库。
+它只依赖本机 `git` 和已经保存的凭据，不需要 `gh`，也不会打开 GitHub 网页。
+
+从项目根目录运行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\skills\auto-push-github\scripts\publish.ps1"
+```
+
+如果仓库里还有其它不想上传的文件，可以只发布指定目录：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\skills\auto-push-github\scripts\publish.ps1" -Paths "skills\auto-push-github"
+```

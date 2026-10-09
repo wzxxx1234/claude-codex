@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Push GitHub"
+  short_description: "Commit and push completed projects automatically"
+  default_prompt: "Use $auto-push-github to commit and push this completed project to its existing GitHub remote."
